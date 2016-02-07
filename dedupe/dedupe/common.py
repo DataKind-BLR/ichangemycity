@@ -39,7 +39,35 @@ class TextDistance(object):
 	def jaccard(v1, v2):
 		v1 = set(v1)
 		v2 = set(v2)		
+		u = len(v1.union(v2))
+		if u == 0:
+			return 1
 		return 1 - float(len(v1.intersection(v2))) / len(v1.union(v2))
+
+class ScoreCombiner(object):	
+	def combine(self, scoreDict):
+		raise NotImplementedError()
+
+class WeightedScoreCombiner(ScoreCombiner):
+	def __init__(self, fields, weights = None):
+		n = len(fields)		
+		if not weights:
+			_n = float(n)
+			weights = {}
+			for field in fields:
+				weights[field] = 1 / _n		
+		assert len(weights) == n
+		self.weights = weights
+		self.sum = sum(weights.values())
+
+	def combine(self, scoreDict):
+		score = 0.0
+		for f, v in scoreDict.iteritems():
+			score += v * self.weights[f]
+		return score / self.sum
+
+# TODO MAKE THIS CONFIGURABLE
+ScoreCombiner._combiner = WeightedScoreCombiner(Properties.tokenizedTextFields)
 
 class DataPoint(object):
 	fields = (set(Properties.textFields)
@@ -98,9 +126,10 @@ class DataPoint(object):
 			self.__setattr__(tf, dbo[tf])
 
 	def distance(self, other):
-		dist = {
-			"geo-distance" : LatLong.distance(self.latlong, other.latlong)			
-		}		
+		dist = {}		
+		tokDistances  = {}
 		for tf in Properties.tokenizedTextFields:
-			dist[tf + "_distance"] = TextDistance.jaccard(self.__dict__[tf], other.__dict__[tf])
+			dist[tf] = TextDistance.jaccard(self.__dict__[tf], other.__dict__[tf])		
+		dist["overallDistance"] = ScoreCombiner._combiner.combine(dist)
+		dist["geo-distance"] = LatLong.distance(self.latlong, other.latlong)
 		return dist
