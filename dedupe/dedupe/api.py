@@ -44,6 +44,16 @@ class SaveDataResource(Resource):
 		except AssertionError as e:
 			return {"message" : e.message}, 400
 
+class CleanDataResource(Resource):
+	def delete(self):
+		dataService.clean()
+		return {"message" : "ok"}, 200
+
+class RemoveDataResource(Resource):
+	def delete(self, Id):
+		dataService.remove(Id)
+		return {"message" : "ok"}, 200
+
 class FindNear(Resource):
 	def post(self, distance=250):
 		try:			
@@ -66,7 +76,9 @@ class FindNear(Resource):
 			return {"message" : e.message}, 400
 		
 
-api.add_resource(SaveDataResource, '/v1/save/')
+api.add_resource(SaveDataResource, '/v1/point/')
+api.add_resource(CleanDataResource, '/v1/points/clean')
+api.add_resource(RemoveDataResource, '/v1/point/<string:Id>/')
 api.add_resource(FindNear, '/v1/query/', '/v1/query/<float:distance>')
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ from common import *
 class DataService(object):
 	def __init__(self):
 		self.dataCollection = mongoClient()[conf["mongo.dbName"]]["data"]
-		self.dataCollection.create_index([("loc" , pymongo.GEOSPHERE)])
+		self.dataCollection.create_index([("loc" , pymongo.GEOSPHERE)])	
 
 	def save(self, dataPoint):
 		_filter = {
@@ -12,7 +12,7 @@ class DataService(object):
 		_update = dataPoint.dbObject()
 		self.dataCollection.replace_one(_filter, _update, upsert=True)
 
-	def find(self, dataPoint, distance):
+	def find(self, dataPoint, distance, combiner=None):
 		query = { 
           "loc" :{ 
 			"$near" : { 
@@ -35,9 +35,8 @@ class DataService(object):
 			})
 		return points
 
-if __name__ == '__main__':
-	dp = DataPoint("")
-	dp.title = "This is ome danmed title with some other sutff going on near govindnagar."
-	dp.description = "This is ome other damned text"
-	dp.latlong = LatLong(1.3, 3.42)
-	print DataService().find(dp)
+	def clean(self):
+		self.dataCollection.remove()
+
+	def remove(self, Id):
+		self.dataCollection.remove({"_id" : Id})
