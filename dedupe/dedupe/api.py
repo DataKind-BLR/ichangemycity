@@ -24,8 +24,7 @@ class Validation(object):
 		pointFormat.append((tf, unicode))
 
 
-def cleanPointJSON(j):
-	print j
+def cleanPointJSON(j):	
 	for f in Properties.tokenizedTextFields:
 		del j[f]
 	return j	

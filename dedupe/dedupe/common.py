@@ -39,6 +39,9 @@ class TextDistance(object):
 	def jaccard(v1, v2):
 		v1 = set(v1)
 		v2 = set(v2)		
+		u = len(v1.union(v2))
+		if u == 0:
+			return 1
 		return 1 - float(len(v1.intersection(v2))) / len(v1.union(v2))
 
 class ScoreCombiner(object):	
