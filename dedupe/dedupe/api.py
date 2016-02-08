@@ -10,11 +10,18 @@ api = Api(app)
 
 
 def validate(j, format):
+	"""
+		Given a format list of (name, type), validate that:
+			- the value exists
+			- the value's type is same as specified
+
+	"""
 	for field, t in format:
 		assert field in j, "Field {} is absent".format(field)
 		assert isinstance(j[field], t), "Expected type {}, but got type {} for field {}".format(t, type(j[field]), field)
 
 class Validation(object):
+	# format for a datapoint
 	pointFormat = [
 		("id", unicode),
 		("latitude", float),
@@ -24,12 +31,16 @@ class Validation(object):
 		pointFormat.append((tf, unicode))
 
 
-def cleanPointJSON(j):	
+def cleanPointJSON(j):
+	# removes excess & derived fields
 	for f in Properties.tokenizedTextFields:
 		del j[f]
 	return j	
 
 class SaveDataResource(Resource):
+	"""
+		Save a new datapoint or update an existing datapoint
+	"""	
 	def post(self):
 		try:			
 			j = request.get_json(force=True)			
@@ -44,16 +55,25 @@ class SaveDataResource(Resource):
 			return {"message" : e.message}, 400
 
 class CleanDataResource(Resource):
+	"""
+		Remove all datapoints
+	"""
 	def delete(self):
 		dataService.clean()
 		return {"message" : "ok"}, 200
 
 class RemoveDataResource(Resource):
+	"""
+		Remove a particular datapoint
+	"""
 	def delete(self, Id):
 		dataService.remove(Id)
 		return {"message" : "ok"}, 200
 
 class FindNear(Resource):
+	"""
+		Endpoint for querying data
+	"""
 	def post(self, distance=250):
 		try:			
 			j = request.get_json(force=True)			
@@ -75,10 +95,11 @@ class FindNear(Resource):
 			return {"message" : e.message}, 400
 		
 
-api.add_resource(SaveDataResource, '/v1/point/')
-api.add_resource(CleanDataResource, '/v1/points/clean')
-api.add_resource(RemoveDataResource, '/v1/point/<string:Id>/')
-api.add_resource(FindNear, '/v1/query/', '/v1/query/<float:distance>')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+	# add resources for endpoints
+	api.add_resource(SaveDataResource, '/v1/point/')
+	api.add_resource(CleanDataResource, '/v1/points/clean')
+	api.add_resource(RemoveDataResource, '/v1/point/<string:Id>/')
+	api.add_resource(FindNear, '/v1/query/', '/v1/query/<float:distance>')
+	app.run(debug=True)
