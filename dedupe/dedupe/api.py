@@ -35,7 +35,10 @@ def cleanPointJSON(j):
 	# removes excess & derived fields
 	for f in Properties.tokenizedTextFields:
 		del j[f]
-	return j	
+	j["latitude"] = j["loc"]["latitude"]
+	j["longitude"] = j["loc"]["longitude"]
+	del j["loc"]
+	return j
 
 class SaveDataResource(Resource):
 	"""
@@ -90,16 +93,23 @@ class FindNear(Resource):
 				"distance" : distance,
 				"nearestPoints" : points
 			}
-			return result, 200			
+			return result, 200
 		except AssertionError as e:
 			return {"message" : e.message}, 400
 		
+
+@app.after_request
+def after_request(response):
+  response.headers.add('Access-Control-Allow-Origin', '*')
+  response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+  response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+  return response
 
 
 if __name__ == '__main__':
 	# add resources for endpoints
 	api.add_resource(SaveDataResource, '/v1/point/')
-	api.add_resource(CleanDataResource, '/v1/points/clean')
+	api.add_resource(CleanDataResource, '/v1/points/clean/')
 	api.add_resource(RemoveDataResource, '/v1/point/<string:Id>/')
 	api.add_resource(FindNear, '/v1/query/', '/v1/query/<float:distance>')
 	app.run(debug=True)
