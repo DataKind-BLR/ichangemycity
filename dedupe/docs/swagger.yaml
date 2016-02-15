@@ -1,0 +1,162 @@
+swagger: '2.0'
+
+info:
+  version: "0.1.0"
+  title: ICMC Deduplication API
+
+consumes:
+  - application/json
+produces:
+  - application/json
+
+host: "localhost:5000"
+ 
+# Describe your paths here
+paths:
+  /v1/point/:
+    # This is a HTTP operation
+    post:
+      # Describe this verb here. Note: you can use markdown
+      description: |
+        Save a new datapoint or update an existing datapoint
+      # This is array of GET operation parameters:
+      parameters:
+        # An example parameter that is in query and is required
+        - name: datapoint
+          in: body
+          description: the datapoint to save or update
+          schema: 
+            $ref: '#/definitions/DataPoint'
+          required: true
+      # Expected responses for this operation:
+      responses:
+        # Response code
+        200:
+          description: Successful response
+          schema:
+            $ref: '#/definitions/Message'
+        400:
+          description: |
+            Validation Error. This is raised when a required field is missing or
+            it is not in the right format.
+          schema:
+            $ref: '#/definitions/Message'
+            
+  /v1/query/:
+    post:
+      description: |
+        Queries the index for similar complaints
+      parameters:
+        - name: datapoint
+          in: body
+          description: the datapoint to use to find nearby complaints
+          schema:
+            $ref: '#/definitions/DataPoint'
+      responses:
+        200:
+          description: |
+            Successfull response
+          schema:
+            $ref: '#/definitions/Results'
+        400:
+          description: |
+            Validation Error. This is raised when a required field is missing or
+            it is not in the right format.
+          schema:
+            $ref: '#/definitions/Message'
+            
+  /v1/points/clean/:
+    delete:
+      description: |
+        Deletes all datapoints held in the index
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: '#/definitions/Message'
+          
+  /v1/point/{id}/:
+    delete:
+      description: |
+        Deletes a particular datapoint. Note-If the datapoint does not exist, the operation is still reported as a success.
+      parameters:
+        - name: id
+          in: path
+          type: string
+          description: the id of the complaint to delete
+          required: true
+      responses:
+        200:
+          description: Successfully deleted
+          schema:
+            $ref: '#/definitions/Message'
+      
+definitions:
+  DataPoint:
+    type: object
+    properties:
+      id:
+        type: string
+        description: the id of the data point
+      latitude:
+        type: number
+        format: double
+        description: the latitude of the data point
+      longitude:
+        type: number
+        description: the longitude of the data point
+        format: double
+      title:
+        type: string
+        description: the title of the complaint
+      description:
+        type: string
+        description: the description of the complaint
+        
+  Message:
+    type: object
+    properties:
+      message:
+        type: string
+        description: a user-readable message
+  
+  
+  NearestPoint:
+    description: |
+      an entity representing a point and associated distances with the query
+      object
+    type: object
+    properties:
+      distances:
+        description: the distances used to determine whether a point is near or not
+        type: object
+        properties:
+          geo-distance:
+            type: number
+            format: float
+            description: the geo-distance
+          tokenized_description:
+            type: number
+            format: float
+            description: the jaccard index of the tokenized description
+          tokenized_title:
+            type: number
+            format: float
+            description: the jaccard index of the tokenized title
+          overallDistance:
+            type: number
+            format: float
+            description: 
+              a single number used to represent the text difference of all text fields
+      point:
+        $ref: '#/definitions/DataPoint'
+  
+  Results:
+    type: object
+    properties:
+      point: 
+        $ref: '#/definitions/DataPoint'
+      nearestPoints: 
+        type: array
+        items:
+          $ref: '#/definitions/NearestPoint'
